@@ -2,6 +2,7 @@ package buff
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 )
 
@@ -9,13 +10,17 @@ type Context struct {
 	Writer  http.ResponseWriter
 	Request *http.Request
 	params  []paramKV
+	pbuf    [8]paramKV
+	sw      statusWriter
 	store   map[string]any
+
+	Route string
 }
 
 type paramKV struct{ key, val string }
 
 func (c *Context) Param(k string) string {
-	for i := range c.params {
+	for i := len(c.params) - 1; i >= 0; i-- {
 		if c.params[i].key == k {
 			return c.params[i].val
 		}
@@ -38,7 +43,7 @@ func (c *Context) Text(code int, s string) error {
 		c.Header("Content-Type", "text/plain; charset=utf-8")
 	}
 	c.Writer.WriteHeader(code)
-	_, err := c.Writer.Write([]byte(s))
+	_, err := io.WriteString(c.Writer, s)
 	return err
 }
 

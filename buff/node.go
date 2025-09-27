@@ -7,9 +7,9 @@ import (
 
 type node struct {
 	part     string
-	children map[string]*node
 	pchild   *node // :param (最多一个)
 	schild   *node // *splat (最多一个，且终止)
+	children map[string]*node
 	wildcard bool
 	splat    bool
 	handlers map[string]Handler // method -> handler
@@ -20,12 +20,13 @@ func newNode(part string) *node {
 	return &node{part: part, children: map[string]*node{}, handlers: map[string]Handler{}, tpls: map[string]string{}}
 }
 
-func (n *node) add(method string, parts []string, h Handler) error {
+func (n *node) add(method string, parts []string, h Handler, tpl string) error {
 	if len(parts) == 0 {
 		if _, ok := n.handlers[method]; ok {
 			return fmt.Errorf("route already exists for %s", method)
 		}
 		n.handlers[method] = h
+		n.tpls[method] = tpl
 		return nil
 	}
 	p := parts[0]
@@ -35,7 +36,7 @@ func (n *node) add(method string, parts []string, h Handler) error {
 			n.pchild = newNode(p)
 			n.pchild.wildcard = true
 		}
-		return n.pchild.add(method, parts[1:], h)
+		return n.pchild.add(method, parts[1:], h, tpl)
 	case strings.HasPrefix(p, "*"):
 		if len(parts) > 1 {
 			return fmt.Errorf("splat must be terminal: %v", parts)
@@ -44,63 +45,50 @@ func (n *node) add(method string, parts []string, h Handler) error {
 			n.schild = newNode(p)
 			n.schild.splat = true
 		}
-		return n.schild.add(method, nil, h)
+		return n.schild.add(method, nil, h, tpl)
 	default:
 		ch := n.children[p]
 		if ch == nil {
 			ch = newNode(p)
 			n.children[p] = ch
 		}
-		return ch.add(method, parts[1:], h)
+		return ch.add(method, parts[1:], h, tpl)
 	}
 }
 
-func (n *node) locate(parts []string) *node {
-	if len(parts) == 0 {
-		return n
-	}
-	p := parts[0]
-	switch {
-	case strings.HasPrefix(p, ":"):
-		if n.pchild == nil || n.pchild.part != p {
-			return nil
-		}
-		return n.pchild.locate(parts[1:])
-	case strings.HasPrefix(p, "*"):
-		if n.schild == nil || n.schild.part != p {
-			return nil
-		}
-		return n.schild
-	default:
-		ch := n.children[p]
-		if ch == nil {
-			return nil
-		}
-		return ch.locate(parts[1:])
-	}
-}
-
-func (n *node) find(parts []string, params []paramKV) (*node, []paramKV) {
-	if len(parts) == 0 {
+func (n *node) findPath(path string, i, j int, params []paramKV) (*node, []paramKV) {
+	if i >= j {
 		return n, params
 	}
-	p := parts[0]
-	// 静态优先
-	if ch := n.children[p]; ch != nil {
-		if leaf, ps := ch.find(parts[1:], params); leaf != nil {
-			return leaf, ps
-		}
+	k := i
+	for k < j && path[k] != '/' {
+		k++
 	}
-	// *splat
+	seg := path[i:k]
+
+	// static
+	if ch := n.children[seg]; ch != nil {
+		return ch.findPath(path, nextIndex(k, j), j, params)
+	}
+
+	// splat
 	if n.schild != nil {
 		key := strings.TrimPrefix(n.schild.part, "*")
-		ps := append(params, paramKV{key: key, val: strings.Join(parts, "/")})
-		return n.schild, ps
+		params = append(params, paramKV{key: key, val: path[i:j]})
+		return n.schild, params
 	}
-	// :param
+	// param
 	if n.pchild != nil {
 		key := strings.TrimPrefix(n.pchild.part, ":")
-		return n.pchild.find(parts[1:], append(params, paramKV{key: key, val: p}))
+		params = append(params, paramKV{key: key, val: seg})
+		return n.pchild.findPath(path, nextIndex(k, j), j, params)
 	}
-	return nil, nil
+	return nil, params
+}
+
+func nextIndex(k, j int) int {
+	if k < j && j > 0 && k+1 <= j {
+		return k + 1
+	}
+	return k
 }

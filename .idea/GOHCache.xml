@@ -3,19 +3,10 @@
   <component name="GoORMHelperCache">
     <option name="schemaMapping">
       <map>
-        <entry key="Chain">
-          <value>
-            <set>
-              <option value="file://$PROJECT_DIR$/buff/server/middleware.go" />
-            </set>
-          </value>
-        </entry>
         <entry key="Context">
           <value>
             <set>
               <option value="file://$PROJECT_DIR$/buff/context.go" />
-              <option value="file://$PROJECT_DIR$/buff/context/context.go" />
-              <option value="file://$PROJECT_DIR$/buff/server/context.go" />
             </set>
           </value>
         </entry>
@@ -23,14 +14,6 @@
           <value>
             <set>
               <option value="file://$PROJECT_DIR$/buff/engine.go" />
-              <option value="file://$PROJECT_DIR$/buff/server/engine.go" />
-            </set>
-          </value>
-        </entry>
-        <entry key="Foo">
-          <value>
-            <set>
-              <option value="file://$PROJECT_DIR$/example/handler.go" />
             </set>
           </value>
         </entry>
@@ -41,26 +24,10 @@
             </set>
           </value>
         </entry>
-        <entry key="ParamKV">
-          <value>
-            <set>
-              <option value="file://$PROJECT_DIR$/buff/context.go" />
-            </set>
-          </value>
-        </entry>
-        <entry key="Request">
-          <value>
-            <set>
-              <option value="file://$PROJECT_DIR$/httpx/httpx.go" />
-              <option value="file://$PROJECT_DIR$/transport/httpx/types.go" />
-            </set>
-          </value>
-        </entry>
         <entry key="Router">
           <value>
             <set>
               <option value="file://$PROJECT_DIR$/buff/router.go" />
-              <option value="file://$PROJECT_DIR$/buff/server/router.go" />
             </set>
           </value>
         </entry>
@@ -68,29 +35,6 @@
           <value>
             <set>
               <option value="file://$PROJECT_DIR$/buff/server.go" />
-              <option value="file://$PROJECT_DIR$/transport/gnetx/http1_server.go" />
-            </set>
-          </value>
-        </entry>
-        <entry key="chain">
-          <value>
-            <set>
-              <option value="file://$PROJECT_DIR$/buff/middleware.go" />
-              <option value="file://$PROJECT_DIR$/buff/server/middleware.go" />
-            </set>
-          </value>
-        </entry>
-        <entry key="gnWriter">
-          <value>
-            <set>
-              <option value="file://$PROJECT_DIR$/transport/gnetx/http1_server.go" />
-            </set>
-          </value>
-        </entry>
-        <entry key="httpConnState">
-          <value>
-            <set>
-              <option value="file://$PROJECT_DIR$/transport/gnetx/http1_server.go" />
             </set>
           </value>
         </entry>
@@ -98,8 +42,6 @@
           <value>
             <set>
               <option value="file://$PROJECT_DIR$/buff/node.go" />
-              <option value="file://$PROJECT_DIR$/hybrid/node.go" />
-              <option value="file://$PROJECT_DIR$/radix/node.go" />
             </set>
           </value>
         </entry>
@@ -124,51 +66,18 @@
             </set>
           </value>
         </entry>
-        <entry key="writer">
-          <value>
-            <set>
-              <option value="file://$PROJECT_DIR$/transport/gnetx/http1_writer.go" />
-            </set>
-          </value>
-        </entry>
-        <entry key="writerAdapter">
-          <value>
-            <set>
-              <option value="file://$PROJECT_DIR$/buff/context.go" />
-            </set>
-          </value>
-        </entry>
       </map>
     </option>
     <option name="scannedPathMapping">
       <map>
-        <entry key="file://$PROJECT_DIR$/buff/Server/engine.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1758691423407" />
-            </ScannedPath>
-          </value>
-        </entry>
         <entry key="file://$PROJECT_DIR$/buff/context.go">
           <value>
             <ScannedPath>
-              <option name="lastModified" value="1758701411701" />
+              <option name="lastModified" value="1758971742570" />
               <option name="schema">
                 <list>
                   <option value="Context" />
                   <option value="paramKV" />
-                </list>
-              </option>
-            </ScannedPath>
-          </value>
-        </entry>
-        <entry key="file://$PROJECT_DIR$/buff/context/context.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1758691935050" />
-              <option name="schema">
-                <list>
-                  <option value="Context" />
                 </list>
               </option>
             </ScannedPath>
@@ -196,7 +105,7 @@
         <entry key="file://$PROJECT_DIR$/buff/middleware.go">
           <value>
             <ScannedPath>
-              <option name="lastModified" value="1758714519381" />
+              <option name="lastModified" value="1758969846094" />
               <option name="schema">
                 <list>
                   <option value="timeoutWriter" />
@@ -205,17 +114,10 @@
             </ScannedPath>
           </value>
         </entry>
-        <entry key="file://$PROJECT_DIR$/buff/model/handler.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1758691935041" />
-            </ScannedPath>
-          </value>
-        </entry>
         <entry key="file://$PROJECT_DIR$/buff/node.go">
           <value>
             <ScannedPath>
-              <option name="lastModified" value="1758702795172" />
+              <option name="lastModified" value="1758971834482" />
               <option name="schema">
                 <list>
                   <option value="node" />
@@ -227,7 +129,7 @@
         <entry key="file://$PROJECT_DIR$/buff/router.go">
           <value>
             <ScannedPath>
-              <option name="lastModified" value="1758713887144" />
+              <option name="lastModified" value="1758971834468" />
               <option name="schema">
                 <list>
                   <option value="Router" />
@@ -249,61 +151,6 @@
             </ScannedPath>
           </value>
         </entry>
-        <entry key="file://$PROJECT_DIR$/buff/server/context.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1758692849134" />
-              <option name="schema">
-                <list>
-                  <option value="Context" />
-                </list>
-              </option>
-            </ScannedPath>
-          </value>
-        </entry>
-        <entry key="file://$PROJECT_DIR$/buff/server/engine.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1758693058595" />
-              <option name="schema">
-                <list>
-                  <option value="Engine" />
-                </list>
-              </option>
-            </ScannedPath>
-          </value>
-        </entry>
-        <entry key="file://$PROJECT_DIR$/buff/server/handler.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1758692306238" />
-            </ScannedPath>
-          </value>
-        </entry>
-        <entry key="file://$PROJECT_DIR$/buff/server/middleware.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1758692594007" />
-              <option name="schema">
-                <list>
-                  <option value="chain" />
-                </list>
-              </option>
-            </ScannedPath>
-          </value>
-        </entry>
-        <entry key="file://$PROJECT_DIR$/buff/server/router.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1758692675398" />
-              <option name="schema">
-                <list>
-                  <option value="Router" />
-                </list>
-              </option>
-            </ScannedPath>
-          </value>
-        </entry>
         <entry key="file://$PROJECT_DIR$/buff/utils.go">
           <value>
             <ScannedPath>
@@ -316,138 +163,17 @@
             </ScannedPath>
           </value>
         </entry>
-        <entry key="file://$PROJECT_DIR$/example/benchmark.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1758706803859" />
-            </ScannedPath>
-          </value>
-        </entry>
         <entry key="file://$PROJECT_DIR$/example/benchmark_test.go">
           <value>
             <ScannedPath>
-              <option name="lastModified" value="1758706860936" />
+              <option name="lastModified" value="1758970387321" />
             </ScannedPath>
           </value>
         </entry>
-        <entry key="file://$PROJECT_DIR$/example/handler.go">
+        <entry key="file://$PROJECT_DIR$/../try/hertz/hertz_test.go">
           <value>
             <ScannedPath>
-              <option name="lastModified" value="1758715219210" />
-              <option name="schema">
-                <list>
-                  <option value="Foo" />
-                </list>
-              </option>
-            </ScannedPath>
-          </value>
-        </entry>
-        <entry key="file://$PROJECT_DIR$/example/main.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1758714848594" />
-            </ScannedPath>
-          </value>
-        </entry>
-        <entry key="file://$PROJECT_DIR$/httpx/httpx.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1758698255165" />
-              <option name="schema">
-                <list>
-                  <option value="Request" />
-                </list>
-              </option>
-            </ScannedPath>
-          </value>
-        </entry>
-        <entry key="file://$PROJECT_DIR$/hybrid/node.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1758700993913" />
-              <option name="schema">
-                <list>
-                  <option value="node" />
-                </list>
-              </option>
-            </ScannedPath>
-          </value>
-        </entry>
-        <entry key="file://$PROJECT_DIR$/radix/node.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1758694068292" />
-              <option name="schema">
-                <list>
-                  <option value="node" />
-                </list>
-              </option>
-            </ScannedPath>
-          </value>
-        </entry>
-        <entry key="file://$PROJECT_DIR$/transport/gnet/http1_writer.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1758698360405" />
-            </ScannedPath>
-          </value>
-        </entry>
-        <entry key="file://$PROJECT_DIR$/transport/gnetx/http1_server.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1758699306703" />
-              <option name="schema">
-                <list>
-                  <option value="gnWriter" />
-                  <option value="httpConnState" />
-                  <option value="Server" />
-                </list>
-              </option>
-            </ScannedPath>
-          </value>
-        </entry>
-        <entry key="file://$PROJECT_DIR$/transport/gnetx/http1_writer.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1758698411626" />
-              <option name="schema">
-                <list>
-                  <option value="writer" />
-                </list>
-              </option>
-            </ScannedPath>
-          </value>
-        </entry>
-        <entry key="file://$PROJECT_DIR$/transport/httpx/parser.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1758698339411" />
-            </ScannedPath>
-          </value>
-        </entry>
-        <entry key="file://$PROJECT_DIR$/transport/httpx/types.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1758698291938" />
-              <option name="schema">
-                <list>
-                  <option value="Request" />
-                </list>
-              </option>
-            </ScannedPath>
-          </value>
-        </entry>
-        <entry key="file://$PROJECT_DIR$/../try/gin/benchmark_test.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1758706912571" />
-            </ScannedPath>
-          </value>
-        </entry>
-        <entry key="file://$PROJECT_DIR$/../try/gin/main.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1758706250702" />
+              <option name="lastModified" value="1758969910981" />
             </ScannedPath>
           </value>
         </entry>
@@ -457,21 +183,15 @@
       <map>
         <entry key="context" value="Context" />
         <entry key="engine" value="Engine" />
-        <entry key="foo" value="Foo" />
-        <entry key="gn_writer" value="gnWriter" />
         <entry key="group" value="Group" />
-        <entry key="http_conn_state" value="httpConnState" />
         <entry key="node" value="node" />
         <entry key="param_kv" value="paramKV" />
-        <entry key="request" value="Request" />
         <entry key="router" value="Router" />
         <entry key="server" value="Server" />
         <entry key="status_writer" value="statusWriter" />
         <entry key="timeout_writer" value="timeoutWriter" />
-        <entry key="writer" value="writer" />
-        <entry key="writer_adapter" value="writerAdapter" />
       </map>
     </option>
-    <option name="lastTimeChecked" value="1758691097468" />
+    <option name="lastTimeChecked" value="1758968614776" />
   </component>
 </project>

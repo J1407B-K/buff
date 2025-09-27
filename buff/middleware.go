@@ -43,7 +43,7 @@ func Logger() Middleware {
 			if sw, ok := c.Writer.(*statusWriter); ok {
 				status = sw.Status()
 			}
-			route, _ := c.Get("route")
+			route := c.Route
 			log.Printf("%s %s route=%v %d %s", c.Request.Method, c.Request.URL.Path, route, status, dur)
 
 		}
@@ -88,7 +88,7 @@ func Timeout(d time.Duration) Middleware {
 			done := make(chan struct{}, 1)
 			go func() {
 				next(c)
-				done <- struct{}{} // 通知完成
+				done <- struct{}{}
 			}()
 
 			select {

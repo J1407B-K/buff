@@ -17,8 +17,7 @@ type Router struct {
 
 	pool sync.Pool
 
-	fast    map[string]map[string]Handler
-	fastTpl map[string]map[string]string
+	fast map[string]map[string]Handler
 
 	mu sync.RWMutex
 }
@@ -30,8 +29,7 @@ func NewRouter() *Router {
 		notFound: func(btx *Context) {
 			btx.JSON(http.StatusNotFound, map[string]any{"error": "route not found"})
 		},
-		fast:    make(map[string]map[string]Handler),
-		fastTpl: make(map[string]map[string]string),
+		fast: make(map[string]map[string]Handler),
 	}
 	r.pool.New = func() any { return &Context{} }
 	return r
@@ -61,21 +59,12 @@ func (r *Router) Handle(method, path string, h Handler, mws ...Middleware) error
 			return fmt.Errorf("route exists: %s %s", method, clean)
 		}
 		mm[clean] = final
-		tm := r.fastTpl[method]
-		if tm == nil {
-			tm = map[string]string{}
-			r.fastTpl[method] = tm
-		}
-		tm[clean] = clean
 		return nil
 	}
 
 	parts := splitPath(clean)
-	if err := r.root.add(method, parts, final); err != nil {
+	if err := r.root.add(method, parts, final, clean); err != nil {
 		return err
-	}
-	if leaf := r.root.locate(parts); leaf != nil {
-		leaf.tpls[method] = clean
 	}
 	return nil
 }
@@ -112,7 +101,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if mm := r.fast[method]; mm != nil {
 		if h, ok := mm[clean]; ok {
 			c := r.getCtx(w, req)
-			c.Set("route", clean)
+			c.Route = clean
 			h(c)
 			r.putCtx(c)
 			return
@@ -120,22 +109,25 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Slow path
-	leaf, params := root.find(splitPath(clean), nil)
 	c := r.getCtx(w, req)
+	leaf, params := root.findPath(req.URL.Path, 1, len(req.URL.Path), c.params[:0])
 	c.params = params
 	if leaf == nil {
 		r.notFound(c)
 		r.putCtx(c)
 		return
 	}
-	h := leaf.handlers[method]
+	c.params = c.params[:len(c.params)]
+	h := leaf.handlers[req.Method]
 	if h == nil {
 		_ = c.JSON(http.StatusMethodNotAllowed, map[string]any{"error": "method not allowed"})
 		r.putCtx(c)
 		return
 	}
 	if tpl, ok := leaf.tpls[method]; ok {
-		c.Set("route", tpl)
+		c.Route = tpl
+	} else {
+		c.Route = ""
 	}
 	h(c)
 	r.putCtx(c)
@@ -143,8 +135,8 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 func (r *Router) getCtx(w http.ResponseWriter, req *http.Request) *Context {
 	c := r.pool.Get().(*Context)
-	sw := &statusWriter{ResponseWriter: w}
-	c.Writer, c.Request = sw, req
+	c.sw = statusWriter{ResponseWriter: w}
+	c.Writer, c.Request = &c.sw, req
 	c.params = c.params[:0]
 	if c.store != nil {
 		for k := range c.store {
@@ -160,13 +152,8 @@ func (r *Router) Verify() error { return verifyNode(r.root) }
 
 func verifyNode(n *node) error {
 	if n.splat {
-		if len(n.children) > 0 || n.pchild != nil || n.schild != nil {
+		if n.pchild != nil || n.schild != nil {
 			return fmt.Errorf("splat node must be terminal: %s", n.part)
-		}
-	}
-	for _, ch := range n.children {
-		if err := verifyNode(ch); err != nil {
-			return err
 		}
 	}
 	if n.pchild != nil {
@@ -190,9 +177,6 @@ func dumpNode(n *node, depth int) string {
 		line += " [H]"
 	}
 	out := line + "\n"
-	for k := range n.children {
-		out += dumpNode(n.children[k], depth+1)
-	}
 	if n.pchild != nil {
 		out += dumpNode(n.pchild, depth+1)
 	}
