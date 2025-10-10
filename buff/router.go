@@ -110,16 +110,18 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	// Slow path
 	c := r.getCtx(w, req)
-	leaf, params := root.findPath(req.URL.Path, 1, len(req.URL.Path), c.params[:0])
+	leaf, params := root.findPath(clean, 1, len(clean), c.params[:0])
 	c.params = params
 	if leaf == nil {
+		c.Route = clean
 		r.notFound(c)
 		r.putCtx(c)
 		return
 	}
 	c.params = c.params[:len(c.params)]
-	h := leaf.handlers[req.Method]
+	h := leaf.handlers[method]
 	if h == nil {
+		c.Route = clean
 		_ = c.JSON(http.StatusMethodNotAllowed, map[string]any{"error": "method not allowed"})
 		r.putCtx(c)
 		return
@@ -127,7 +129,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if tpl, ok := leaf.tpls[method]; ok {
 		c.Route = tpl
 	} else {
-		c.Route = ""
+		c.Route = clean
 	}
 	h(c)
 	r.putCtx(c)
@@ -138,6 +140,7 @@ func (r *Router) getCtx(w http.ResponseWriter, req *http.Request) *Context {
 	c.sw = statusWriter{ResponseWriter: w}
 	c.Writer, c.Request = &c.sw, req
 	c.params = c.params[:0]
+	c.Route = ""
 	if c.store != nil {
 		for k := range c.store {
 			delete(c.store, k)

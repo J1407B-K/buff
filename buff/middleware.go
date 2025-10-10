@@ -39,12 +39,8 @@ func Logger() Middleware {
 			start := time.Now()
 			next(c)
 			dur := time.Since(start)
-			status := http.StatusOK
-			if sw, ok := c.Writer.(*statusWriter); ok {
-				status = sw.Status()
-			}
-			route := c.Route
-			log.Printf("%s %s route=%v %d %s", c.Request.Method, c.Request.URL.Path, route, status, dur)
+			status := c.sw.Status()
+			log.Printf("%s %s route=%v %d %s", c.Request.Method, c.Request.URL.Path, c.Route, status, dur)
 
 		}
 	}
