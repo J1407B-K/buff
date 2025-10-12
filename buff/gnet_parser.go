@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/textproto"
 	"net/url"
@@ -70,31 +71,56 @@ func parseHTTPRequest(buf []byte, maxHeaderBytes int) (*http.Request, int, bool,
 		header.Add(key, val)
 	}
 
-	if te := header.Get("Transfer-Encoding"); te != "" && !strings.EqualFold(te, "identity") {
-		return nil, 0, false, fmt.Errorf("transfer-encoding %q not supported", te)
+	chunked, err := hasChunkedEncoding(header)
+	if err != nil {
+		return nil, 0, false, err
 	}
 
-	contentLength := 0
-	if cl := header.Get("Content-Length"); cl != "" {
-		clVal, err := strconv.ParseInt(cl, 10, 64)
-		if err != nil || clVal < 0 {
-			return nil, 0, false, fmt.Errorf("invalid Content-Length: %q", cl)
-		}
-		if clVal > int64(len(buf)) {
-			return nil, 0, false, errNeedMoreData
-		}
-		contentLength = int(clVal)
+	if chunked && header.Get("Content-Length") != "" {
+		return nil, 0, false, fmt.Errorf("chunked request must not include Content-Length")
 	}
 
 	sepLen := len(headerSeparatorBuf)
-	total := headerEnd + sepLen + contentLength
-	if len(buf) < total {
-		return nil, 0, false, errNeedMoreData
-	}
-
+	bodyStart := headerEnd + sepLen
+	total := bodyStart
 	var body io.ReadCloser = http.NoBody
-	if contentLength > 0 {
-		body = io.NopCloser(bytes.NewReader(buf[headerEnd+sepLen : total]))
+	contentLength := 0
+
+	if chunked {
+		data, consumed, trailers, err := parseChunkedBody(buf, bodyStart)
+		if err != nil {
+			return nil, 0, false, err
+		}
+		for k, vv := range trailers {
+			for _, v := range vv {
+				header.Add(k, v)
+			}
+		}
+		total = consumed
+		if len(data) > 0 {
+			body = io.NopCloser(bytes.NewReader(data))
+		}
+		contentLength = len(data)
+	} else {
+		if cl := header.Get("Content-Length"); cl != "" {
+			clVal, err := strconv.ParseInt(cl, 10, 64)
+			if err != nil || clVal < 0 {
+				return nil, 0, false, fmt.Errorf("invalid Content-Length: %q", cl)
+			}
+			if clVal > int64(len(buf)) {
+				return nil, 0, false, errNeedMoreData
+			}
+			contentLength = int(clVal)
+		}
+
+		total = bodyStart + contentLength
+		if len(buf) < total {
+			return nil, 0, false, errNeedMoreData
+		}
+
+		if contentLength > 0 {
+			body = io.NopCloser(bytes.NewReader(buf[bodyStart:total]))
+		}
 	}
 
 	requestURI := target
@@ -116,6 +142,9 @@ func parseHTTPRequest(buf []byte, maxHeaderBytes int) (*http.Request, int, bool,
 		ContentLength: int64(contentLength),
 		Host:          header.Get("Host"),
 		RequestURI:    requestURI,
+	}
+	if chunked {
+		req.TransferEncoding = []string{"chunked"}
 	}
 	req.URL = parsedURL
 	req.Close = shouldCloseConnection(req, header)
@@ -167,4 +196,122 @@ func shouldCloseConnection(req *http.Request, hdr http.Header) bool {
 		return !hasConnectionToken(hdr, "keep-alive")
 	}
 	return false
+}
+
+func hasChunkedEncoding(hdr http.Header) (bool, error) {
+	values := hdr.Values("Transfer-Encoding")
+	if len(values) == 0 {
+		return false, nil
+	}
+	var encodings []string
+	for _, v := range values {
+		parts := strings.Split(v, ",")
+		for _, p := range parts {
+			token := strings.TrimSpace(strings.ToLower(p))
+			if token == "" {
+				continue
+			}
+			encodings = append(encodings, token)
+		}
+	}
+	if len(encodings) == 0 {
+		return false, fmt.Errorf("invalid Transfer-Encoding header")
+	}
+	chunked := false
+	for i, enc := range encodings {
+		switch enc {
+		case "identity":
+			continue
+		case "chunked":
+			if i != len(encodings)-1 {
+				return false, fmt.Errorf("transfer-encoding %q not supported", enc)
+			}
+			chunked = true
+		default:
+			return false, fmt.Errorf("transfer-encoding %q not supported", enc)
+		}
+	}
+	return chunked, nil
+}
+
+func parseChunkedBody(buf []byte, start int) ([]byte, int, http.Header, error) {
+	i := start
+	if i > len(buf) {
+		return nil, 0, nil, errNeedMoreData
+	}
+
+	var body bytes.Buffer
+	var trailers http.Header
+
+	for {
+		lineOffset := bytes.Index(buf[i:], crlfBytes)
+		if lineOffset == -1 {
+			return nil, 0, nil, errNeedMoreData
+		}
+		lineEnd := i + lineOffset
+		sizeLine := string(buf[i:lineEnd])
+		semi := strings.Index(sizeLine, ";")
+		if semi >= 0 {
+			sizeLine = sizeLine[:semi]
+		}
+		if sizeLine == "" {
+			return nil, 0, nil, fmt.Errorf("invalid chunk size line")
+		}
+		chunkSize, err := strconv.ParseInt(sizeLine, 16, 64)
+		if err != nil || chunkSize < 0 {
+			return nil, 0, nil, fmt.Errorf("invalid chunk size: %q", sizeLine)
+		}
+		i = lineEnd + len(crlfBytes)
+
+		if int64(len(buf)-i) < chunkSize+int64(len(crlfBytes)) {
+			return nil, 0, nil, errNeedMoreData
+		}
+
+		if chunkSize > 0 {
+			if chunkSize > math.MaxInt || i > len(buf)-int(chunkSize) {
+				return nil, 0, nil, fmt.Errorf("invalid chunk size: %q", sizeLine)
+			}
+			body.Write(buf[i : i+int(chunkSize)])
+			i += int(chunkSize)
+		}
+
+		if len(buf) < i+len(crlfBytes) {
+			return nil, 0, nil, errNeedMoreData
+		}
+		if !bytes.Equal(buf[i:i+len(crlfBytes)], crlfBytes) {
+			return nil, 0, nil, fmt.Errorf("invalid chunk terminator")
+		}
+		i += len(crlfBytes)
+
+		if chunkSize == 0 {
+			for {
+				if i >= len(buf) {
+					return nil, 0, nil, errNeedMoreData
+				}
+				lineOffset := bytes.Index(buf[i:], crlfBytes)
+				if lineOffset == -1 {
+					return nil, 0, nil, errNeedMoreData
+				}
+				if lineOffset == 0 {
+					i += len(crlfBytes)
+					break
+				}
+				line := buf[i : i+lineOffset]
+				colon := bytes.IndexByte(line, ':')
+				if colon <= 0 {
+					return nil, 0, nil, fmt.Errorf("malformed trailer line: %q", string(line))
+				}
+				key := textproto.CanonicalMIMEHeaderKey(strings.TrimSpace(string(line[:colon])))
+				val := strings.TrimSpace(string(line[colon+1:]))
+				if trailers == nil {
+					trailers = http.Header{}
+				}
+				trailers.Add(key, val)
+				i += lineOffset + len(crlfBytes)
+			}
+			break
+		}
+	}
+
+	return body.Bytes(), i, trailers, nil
 }

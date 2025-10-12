@@ -81,3 +81,62 @@ func TestGNetResponseWriterFinalize(t *testing.T) {
 	pool.Put(respBuf)
 	releaseGNetResponseWriter(pool, w)
 }
+
+func TestParseHTTPRequestChunked(t *testing.T) {
+	raw := "" +
+		"POST /chunk HTTP/1.1\r\n" +
+		"Host: example.com\r\n" +
+		"Transfer-Encoding: chunked\r\n" +
+		"\r\n" +
+		"4\r\nWiki\r\n" +
+		"5\r\npedia\r\n" +
+		"0\r\n" +
+		"\r\n"
+	req, consumed, closeAfter, err := parseHTTPRequest([]byte(raw), 4096)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if consumed != len(raw) {
+		t.Fatalf("expected consumed %d, got %d", len(raw), consumed)
+	}
+	if closeAfter {
+		t.Fatalf("expected keep-alive connection")
+	}
+	if req.TransferEncoding == nil || len(req.TransferEncoding) != 1 || req.TransferEncoding[0] != "chunked" {
+		t.Fatalf("expected chunked transfer encoding, got %#v", req.TransferEncoding)
+	}
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		t.Fatalf("read body: %v", err)
+	}
+	if string(body) != "Wikipedia" {
+		t.Fatalf("unexpected body %q", string(body))
+	}
+	if req.ContentLength != int64(len(body)) {
+		t.Fatalf("unexpected content length %d want %d", req.ContentLength, len(body))
+	}
+	_ = req.Body.Close()
+}
+
+func TestParseHTTPRequestChunkedWithTrailer(t *testing.T) {
+	raw := "" +
+		"POST /chunk HTTP/1.1\r\n" +
+		"Host: example.com\r\n" +
+		"Transfer-Encoding: chunked\r\n" +
+		"\r\n" +
+		"4\r\nWiki\r\n" +
+		"0\r\n" +
+		"\r\n" +
+		"X-Custom: value\r\n" +
+		"\r\n"
+	req, consumed, _, err := parseHTTPRequest([]byte(raw), 4096)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if consumed != len(raw) {
+		t.Fatalf("expected consumed %d, got %d", len(raw), consumed)
+	}
+	if req.Header.Get("X-Custom") != "value" {
+		t.Fatalf("expected trailer promoted into header, got %q", req.Header.Get("X-Custom"))
+	}
+}

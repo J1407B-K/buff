@@ -18,6 +18,6 @@ func (e *Engine) RunGNet(addr string, opts ...GNetRunOption) error {
 	}
 	handler := newGNetHTTPHandler(e.R, cfg)
 	protoAddr := ensureProtoAddr(addr)
-	log.Printf("buff gnet listening on %s", protoAddr)
+	log.Printf("buff gnet listening on %s", addr)
 	return gnet.Run(handler, protoAddr, cfg.opts...)
 }
