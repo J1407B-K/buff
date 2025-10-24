@@ -112,8 +112,8 @@ func TestParseHTTPRequestChunked(t *testing.T) {
 	if string(body) != "Wikipedia" {
 		t.Fatalf("unexpected body %q", string(body))
 	}
-	if req.ContentLength != int64(len(body)) {
-		t.Fatalf("unexpected content length %d want %d", req.ContentLength, len(body))
+	if req.ContentLength != -1 {
+		t.Fatalf("expected chunked content length -1, got %d", req.ContentLength)
 	}
 	_ = req.Body.Close()
 }

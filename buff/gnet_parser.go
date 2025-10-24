@@ -84,7 +84,7 @@ func parseHTTPRequest(buf []byte, maxHeaderBytes int) (*http.Request, int, bool,
 	bodyStart := headerEnd + sepLen
 	total := bodyStart
 	var body io.ReadCloser = http.NoBody
-	contentLength := 0
+	contentLength := int64(0)
 
 	if chunked {
 		data, consumed, trailers, err := parseChunkedBody(buf, bodyStart)
@@ -100,8 +100,9 @@ func parseHTTPRequest(buf []byte, maxHeaderBytes int) (*http.Request, int, bool,
 		if len(data) > 0 {
 			body = io.NopCloser(bytes.NewReader(data))
 		}
-		contentLength = len(data)
+		contentLength = -1
 	} else {
+		length := 0
 		if cl := header.Get("Content-Length"); cl != "" {
 			clVal, err := strconv.ParseInt(cl, 10, 64)
 			if err != nil || clVal < 0 {
@@ -110,17 +111,18 @@ func parseHTTPRequest(buf []byte, maxHeaderBytes int) (*http.Request, int, bool,
 			if clVal > int64(len(buf)) {
 				return nil, 0, false, errNeedMoreData
 			}
-			contentLength = int(clVal)
+			length = int(clVal)
 		}
 
-		total = bodyStart + contentLength
+		total = bodyStart + length
 		if len(buf) < total {
 			return nil, 0, false, errNeedMoreData
 		}
 
-		if contentLength > 0 {
+		if length > 0 {
 			body = io.NopCloser(bytes.NewReader(buf[bodyStart:total]))
 		}
+		contentLength = int64(length)
 	}
 
 	requestURI := target
